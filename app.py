@@ -1,17 +1,12 @@
 import html
 import os
+import re
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import quote
 
 EMAIL_CONTACT = os.getenv("EMAIL_CONTACT", "").strip()
-DOMAINS = {
-    value.strip().lower().rstrip(".")
-    for i in range(1, 1000)
-    if (value := os.getenv(f"DOMAIN{i}", ""))
-}
-
-if not EMAIL_CONTACT or not DOMAINS:
-    raise SystemExit("Set EMAIL_CONTACT and at least one DOMAIN1...DOMAIN999")
+if not EMAIL_CONTACT:
+    raise SystemExit("Set EMAIL_CONTACT")
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -23,7 +18,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def respond(self, head_only=False):
         domain = self.headers.get("Host", "").split(":", 1)[0].lower().rstrip(".")
-        if domain not in DOMAINS:
+        if len(domain) > 253 or not re.fullmatch(r"[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*", domain):
             self.send_error(404)
             return
 
